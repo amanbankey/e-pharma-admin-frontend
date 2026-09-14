@@ -23,6 +23,7 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const { admin, can, logout } = useAdminAuth();
+  const { admin: currentAdmin } = useAdminAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -72,6 +73,7 @@ export default function Sidebar() {
             <p className="truncate text-sm font-semibold text-cream">{admin?.fullName}</p>
             <p className="truncate text-xs capitalize text-cream/50">{admin?.role}</p>
           </div>
+            {currentAdmin?.role === 'superadmin' && (
           <button
             onClick={() => setPasswordModalOpen(true)}
             aria-label="Change password"
@@ -79,7 +81,7 @@ export default function Sidebar() {
             className="p-1.5 text-cream/60 hover:text-gold-400 transition"
           >
             <KeyRound size={16} />
-          </button>
+          </button>)}
           <button onClick={handleLogout} aria-label="Log out" title="Log out" className="p-1.5 text-cream/60 hover:text-red-400 transition">
             <LogOut size={16} />
           </button>
