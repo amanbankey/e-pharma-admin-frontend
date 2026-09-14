@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@theme {
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
+
+  --color-cream: #F6F3EA;
+  --color-paper: #FBF9F3;
+  --color-ink: #1C2420;
+  --color-ink-soft: #4E5A52;
+  --color-teal-900: #0C2E28;
+  --color-teal-700: #124C42;
+  --color-teal-500: #1B6B5C;
+  --color-teal-100: #E1EBE6;
+  --color-gold-600: #A97A34;
+  --color-gold-400: #C79A52;
+  --color-gold-100: #F1E4C9;
+  --color-line: #DAD5C2;
+  --color-red-600: #B84A3E;
+  --color-red-100: #F6E3DF;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background: var(--color-gold-100);
+  color: var(--color-teal-900);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
