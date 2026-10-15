@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, X, FileWarning, Upload, Image as ImageIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, FileWarning, Upload, Image as ImageIcon, Loader2, ChevronLeft, ChevronRight, MoreVertical, AlertTriangle } from 'lucide-react';
 import { productsApi, categoryApi } from '../lib/api';
 
 const ITEMS_PER_PAGE = 20;
@@ -22,6 +22,10 @@ export default function Products() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionMenu, setActionMenu] = useState(null); // { product, top, right } of the open 3-dots menu
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const loadCategories = () => {
     categoryApi
@@ -144,14 +148,40 @@ export default function Products() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remove this product and its images from the catalogue?')) return;
+  const openDeletePopup = (product) => {
+    setDeleteError('');
+    setDeleteTarget(product);
+  };
+
+  const closeDeletePopup = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError('');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
     try {
-      await productsApi.remove(id);
+      await productsApi.remove(deleteTarget._id);
+      setDeleteTarget(null);
       loadProducts();
     } catch (err) {
-      alert(err.message || 'Failed to delete product');
+      setDeleteError(err.message || 'Failed to delete product');
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  // 3-dots menu: opens below the clicked icon (fixed position, so the scrollable table does not clip it)
+  const toggleActionMenu = (e, product) => {
+    if (actionMenu?.product._id === product._id) {
+      setActionMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActionMenu({ product, top: rect.bottom + 6, right: window.innerWidth - rect.right });
   };
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
@@ -220,9 +250,9 @@ export default function Products() {
                   <th className="px-5 py-3">Name</th>
                   <th className="px-5 py-3">Category</th>
                   <th className="px-5 py-3">Price</th>
-                  <th className="px-5 py-3">MRP</th>
-                  <th className="px-5 py-3">Stock</th>
-                  <th className="px-5 py-3">Rx</th>
+                  <th className="text-center px-5 py-3">MRP</th>
+                  <th className=" text-center px-5 py-3">Stock</th>
+                
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -249,32 +279,28 @@ export default function Products() {
                     </td>
                     <td className="px-5 py-3 text-ink-soft">{getCategoryLabel(p.category)}</td>
                     <td className="px-5 py-3 font-semibold text-teal-900">₹{p.price}</td>
-                    <td className="px-5 py-3 text-ink-soft line-through">₹{p.mrp}</td>
-                    <td className="px-5 py-3">
+                    <td className="text-center px-5 py-3 text-ink-soft line-through">₹{p.mrp}</td>
+                    <td className="text-center px-5 py-3">
                       <span className={`text-sm font-medium ${Math.max((p.totalStock ?? 0) - (p.reservedStock ?? 0), 0) <= (p.lowStockThreshold ?? 20) ? 'text-red-600' : 'text-teal-700'}`}>
                         {Math.max((p.totalStock ?? 0) - (p.reservedStock ?? 0), 0)}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    {/* <td className="px-5 py-3">
                       {p.prescriptionRequired && (
                         <span className="flex items-center gap-1 rounded-full bg-gold-100 px-2 py-1 text-[11px] font-medium text-gold-600 w-fit">
                           <FileWarning size={11} /> Rx
                         </span>
                       )}
-                    </td>
+                    </td> */}
                     <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end">
                         <button
-                          onClick={() => openEdit(p)}
-                          className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-teal-900 hover:border-teal-500"
+                          onClick={(e) => toggleActionMenu(e, p)}
+                          className="grid h-8 w-8 place-items-center rounded-full text-ink-soft transition hover:bg-teal-100/60 hover:text-teal-900"
+                          aria-label="More actions"
+                          title="More actions"
                         >
-                          <Pencil size={12} /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p._id)}
-                          className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-red-600 hover:text-red-600"
-                        >
-                          <Trash2 size={12} />
+                          <MoreVertical size={18} />
                         </button>
                       </div>
                     </td>
@@ -480,6 +506,90 @@ export default function Products() {
                 {editingId ? 'Save changes' : 'Add to catalogue'}
               </button>
             </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Row actions menu (3 dots): Edit / Delete */}
+      {actionMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setActionMenu(null)} />
+          <div
+            style={{ top: actionMenu.top, right: actionMenu.right }}
+            className="fixed z-50 w-36 overflow-hidden rounded-xl border border-line bg-paper py-1 shadow-lg"
+          >
+            <button
+              onClick={() => {
+                const product = actionMenu.product;
+                setActionMenu(null);
+                openEdit(product);
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-teal-900 transition hover:bg-teal-100/50"
+            >
+              <Pencil size={14} /> Edit
+            </button>
+            <button
+              onClick={() => {
+                const product = actionMenu.product;
+                setActionMenu(null);
+                openDeletePopup(product);
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </>
+      )}
+      {/* Delete Product Confirmation Popup */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+            onClick={closeDeletePopup}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl bg-paper p-6 text-center"
+            >
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-red-100 text-red-600">
+                <AlertTriangle size={22} />
+              </span>
+              <h3 className="mt-4 font-display text-xl text-teal-900">Delete this product?</h3>
+              <p className="mt-2 text-sm text-ink-soft">
+                <span className="font-semibold text-teal-900">{deleteTarget.name}</span> and its images will be
+                permanently removed from the catalogue. This cannot be undone.
+              </p>
+
+              {deleteError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-sm text-red-700">{deleteError}</p>
+              )}
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={closeDeletePopup}
+                  disabled={deleting}
+                  className="flex-1 rounded-full border border-line py-2.5 text-sm font-semibold text-ink-soft transition hover:border-teal-500 hover:text-teal-900 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={14} />}
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

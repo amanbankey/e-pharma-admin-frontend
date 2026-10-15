@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, CalendarDays,Pencil } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, CalendarDays, Pencil, MoreVertical } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import { ordersApi } from '../lib/api';
 
@@ -24,6 +24,7 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [savingDate, setSavingDate] = useState(false);
+  const [actionMenu, setActionMenu] = useState(null); // { order, top, right } of the open 3-dots menu
 
   const load = () => {
     setLoading(true);
@@ -62,6 +63,17 @@ export default function Orders() {
   const openOrderDetail = (o) => {
     setSelected(o);
     setDeliveryDate(o.expectedDeliveryDate ? new Date(o.expectedDeliveryDate).toISOString().slice(0, 10) : '');
+  };
+
+  // 3-dots menu: opens below the clicked icon (fixed position, so the scrollable table does not clip it)
+  const toggleActionMenu = (e, order) => {
+    e.stopPropagation();
+    if (actionMenu?.order._id === order._id) {
+      setActionMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActionMenu({ order, top: rect.bottom + 6, right: window.innerWidth - rect.right });
   };
 
   // Pagination
@@ -114,13 +126,18 @@ export default function Orders() {
                     <td className="px-5 py-3 text-ink-soft">{new Date(o.orderDate || o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
                     <td className="px-5 py-3 font-semibold text-teal-900">₹{o.totalAmount}</td>
                     <td className="px-5 py-3"><StatusBadge status={o.orderStatus} /></td>
-                    <td className='text-left py-3 '> 
-                      <div className='w-16'> 
-                        <span 
-                          className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-teal-900 hover:border-teal-500"
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={(e) => toggleActionMenu(e, o)}
+                          className="grid h-8 w-8 place-items-center rounded-full text-ink-soft transition hover:bg-teal-100/60 hover:text-teal-900"
+                          aria-label="More actions"
+                          title="More actions"
                         >
-                          <Pencil size={12} /> Edit
-                        </span></div></td>
+                          <MoreVertical size={18} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {orders.length === 0 && (
@@ -269,6 +286,28 @@ export default function Orders() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Row actions menu (3 dots): Edit */}
+      {actionMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setActionMenu(null)} />
+          <div
+            style={{ top: actionMenu.top, right: actionMenu.right }}
+            className="fixed z-50 w-36 overflow-hidden rounded-xl border border-line bg-paper py-1 shadow-lg"
+          >
+            <button
+              onClick={() => {
+                const order = actionMenu.order;
+                setActionMenu(null);
+                openOrderDetail(order);
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-teal-900 transition hover:bg-teal-100/50"
+            >
+              <Pencil size={14} /> Edit
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

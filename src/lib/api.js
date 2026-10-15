@@ -2,18 +2,48 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('adminToken');
-  const res = await fetch(`${BASE_URL}${path}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  });
-  const data = await res.json();
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+      ...options,
+    });
+  } catch {
+    throw new Error('Unable to reach the server. Please check your internet connection and try again.');
+  }
+
+  const data = await res.json().catch(() => ({}));
+
+  // If token is expired or invalid (HTTP 401), clean up and redirect to login
+  if (
+    res.status === 401 ||
+    (typeof data?.message === 'string' &&
+      (data.message.toLowerCase().includes('expired token') ||
+        data.message.toLowerCase().includes('token is missing') ||
+        data.message.toLowerCase().includes('invalid token')))
+  ) {
+    localStorage.removeItem('adminToken');
+    window.dispatchEvent(new CustomEvent('adminAuth:expired'));
+
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }
+
   if (!res.ok || data.success === false) {
-    throw new Error(data.message || 'Something went wrong');
+    if (res.status === 429) {
+      throw new Error(data.message || 'Too many attempts. Please wait a few minutes and try again.');
+    }
+    if (res.status >= 500 && !data.message) {
+      throw new Error('Our server ran into a problem. Please try again in a moment.');
+    }
+    throw new Error(data.message || 'Something went wrong. Please try again.');
   }
   return data;
 }
@@ -44,17 +74,27 @@ export const productsApi = {
     const token = localStorage.getItem('adminToken');
     const formData = new FormData();
     formData.append('image', file);
-    const res = await fetch(`${BASE_URL}/products/upload-image`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: formData,
-    });
-    const data = await res.json();
+
+    let res;
+    try {
+      res = await fetch(`${BASE_URL}/products/upload-image`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+    } catch {
+      throw new Error('Unable to reach the server. Please check your internet connection and try again.');
+    }
+
+    const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) {
-      throw new Error(data.message || 'Image upload failed');
+      if (res.status >= 500 && !data.message) {
+        throw new Error('Our server ran into a problem while uploading the image. Please try again.');
+      }
+      throw new Error(data.message || 'Image upload failed. Please try again.');
     }
     return data;
   },

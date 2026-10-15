@@ -27,6 +27,12 @@ body {
   font-family: var(--font-body);
 }
 
+/* Hide the browser's built-in password reveal/clear icons so our custom eye icon doesn't double up */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 .font-display {
   font-family: var(--font-display);
 }

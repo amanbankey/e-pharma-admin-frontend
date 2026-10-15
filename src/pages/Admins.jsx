@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, ShieldCheck, Trash2, Power, KeyRound, Mail, CheckCircle2, Loader2, Pencil } from 'lucide-react';
+import { Plus, X, ShieldCheck, Trash2, Power, KeyRound, Mail, CheckCircle2, Loader2, Pencil, AlertTriangle } from 'lucide-react';
 import { adminsApi, adminAuthApi } from '../lib/api';
 import { useAdminAuth } from '../lib/AdminAuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -27,6 +27,9 @@ export default function Admins() {
   const [editAdmin, setEditAdmin] = useState(false)
   const [editDetail, setEditDetail] = useState({ fullName: '', email: '', password: '', permissions: [] })
   const [editId, setEditId]=useState("")
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -84,10 +87,30 @@ export default function Admins() {
     load();
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remove this admin account?')) return;
-    await adminsApi.remove(id);
-    load();
+  const openDeletePopup = (admin) => {
+    setDeleteError('');
+    setDeleteTarget(admin);
+  };
+
+  const closeDeletePopup = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError('');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await adminsApi.remove(deleteTarget._id);
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete admin');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -193,7 +216,7 @@ export default function Admins() {
               <button onClick={() => toggleActive(a)} className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line py-2 text-sm font-medium text-teal-900 hover:border-teal-500">
                 <Power size={14} /> {a.isActive ? 'Disable' : 'Enable'}
               </button>
-              <button onClick={() => handleDelete(a._id)} className="flex items-center justify-center rounded-full border border-line px-3 text-ink-soft hover:border-red-600 hover:text-red-600">
+              <button onClick={() => openDeletePopup(a)} className="flex items-center justify-center rounded-full border border-line px-3 text-ink-soft hover:border-red-600 hover:text-red-600">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -328,6 +351,60 @@ export default function Admins() {
                 Edit admin
               </button>
             </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Admin Confirmation Popup */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+            onClick={closeDeletePopup}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl bg-paper p-6 text-center"
+            >
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-red-100 text-red-600">
+                <AlertTriangle size={22} />
+              </span>
+              <h3 className="mt-4 font-display text-xl text-teal-900">Remove this admin?</h3>
+              <p className="mt-2 text-sm text-ink-soft">
+                <span className="font-semibold text-teal-900">{deleteTarget.fullName}</span>'s admin account will be
+                permanently removed. This cannot be undone.
+              </p>
+
+              {deleteError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-sm text-red-700">{deleteError}</p>
+              )}
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={closeDeletePopup}
+                  disabled={deleting}
+                  className="flex-1 rounded-full border border-line py-2.5 text-sm font-semibold text-ink-soft transition hover:border-teal-500 hover:text-teal-900 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={14} />}
+                  {deleting ? 'Removing…' : 'Yes, remove'}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
