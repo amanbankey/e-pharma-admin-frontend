@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Pill, Boxes, ClipboardList, LineChart, Users, ShieldCheck,
-  Menu, X, LogOut, Leaf, Tag, KeyRound,
+  Menu, X, LogOut, Leaf, Tag, KeyRound,  
 } from 'lucide-react';
 import { useAdminAuth } from '../lib/AdminAuthContext';
 import ChangePasswordModal from './ChangePasswordModal';
@@ -25,8 +25,13 @@ export default function Sidebar() {
   const { admin, can, logout } = useAdminAuth();
   const { admin: currentAdmin } = useAdminAuth();
   const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false)
 
-  const handleLogout = () => {
+
+  const handleLogout = () => { 
+      localStorage.removeItem("token");
+     localStorage.removeItem("admin");
+     setShowPopup(false);
     logout();
     navigate('/login');
   };
@@ -34,7 +39,7 @@ export default function Sidebar() {
   const links = navItems.filter((item) => can(item.permission));
 
   const content = (
-    <div className="flex h-full flex-col">
+    <div className="flex h-screen flex-col">
       <div className="flex items-center gap-2 px-6 py-6">
         <span className="grid h-9 w-9 place-items-center rounded-full bg-gold-600 text-teal-900">
           <Leaf size={18} strokeWidth={2.2} />
@@ -82,11 +87,72 @@ export default function Sidebar() {
           >
             <KeyRound size={16} />
           </button>)}
-          <button onClick={handleLogout} aria-label="Log out" title="Log out" className="p-1.5 text-cream/60 hover:text-red-400 transition">
+          <button onClick={() => setShowPopup(true)} aria-label="Log out" title="Log out" className="p-1.5 text-cream/60 hover:text-red-400 transition">
             <LogOut size={16} />
           </button>
         </div>
       </div>
+
+
+     <AnimatePresence>
+  {showPopup && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] grid place-items-center bg-black/50 px-4 backdrop-blur-sm"
+      onClick={() => setShowPopup(false)}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ duration: 0.2 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-cream/10 bg-teal-900 shadow-2xl"
+      >
+        <button
+          onClick={() => setShowPopup(false)}
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-cream/50 transition hover:bg-cream/10 hover:text-cream"
+          aria-label="Close"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="p-6">
+          <div className="mb-5 grid h-11 w-11 place-items-center rounded-full bg-red-400/10 text-red-400">
+            <LogOut size={20} />
+          </div>
+
+          <h2 className="font-display text-xl font-semibold text-cream">
+            Logout?
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-cream/50">
+            Are you sure you want to logout from your admin account?
+          </p>
+
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={() => setShowPopup(false)}
+              className="flex-1 rounded-xl border border-cream/10 bg-cream/5 px-4 py-2.5 text-sm font-medium text-cream transition hover:bg-cream/10"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="flex-1 rounded-xl bg-red-500/90 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
     </div>
   );
 

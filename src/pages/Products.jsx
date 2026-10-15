@@ -75,6 +75,15 @@ export default function Products() {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
+    const invalid = files.some(
+      (file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !/\.(jpe?g|png|webp)$/i.test(file.name)
+    );
+    if (invalid) {
+      setUploadError('Please upload jpg, jpeg, png or webp extension image');
+      e.target.value = '';
+      return;
+    }
+
     setUploadingImage(true);
     setUploadError('');
 
@@ -165,7 +174,7 @@ export default function Products() {
   };
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto lg:h-screen p-6 lg:p-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-teal-900">Products</h1>
@@ -413,13 +422,13 @@ export default function Products() {
                           <>
                             <Upload className="mb-2 text-teal-800" size={24} />
                             <p className="text-sm font-semibold text-teal-900">Click to upload product image(s)</p>
-                            <p className="text-xs text-ink-soft">PNG, JPG, WEBP (saved to Cloudinary)</p>
+                            <p className="text-xs text-ink-soft">JPG, JPEG, PNG, WEBP (saved to Cloudinary)</p>
                           </>
                         )}
                       </div>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                         multiple
                         disabled={uploadingImage}
                         onChange={handleImageUpload}

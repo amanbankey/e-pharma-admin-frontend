@@ -39,7 +39,7 @@ export default function Dashboard() {
   if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto lg:h-screen p-6 lg:p-10">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-3xl text-teal-900">Dashboard</h1>
         <p className="mt-1 text-ink-soft">Here's how Vernal Rx is doing today.</p>

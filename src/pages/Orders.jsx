@@ -72,7 +72,7 @@ export default function Orders() {
   );
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto lg:h-screen p-6 lg:p-10">
       <h1 className="font-display text-3xl text-teal-900">Orders</h1>
       <p className="mt-1 text-ink-soft">Every order, from placed to delivered.</p>
 

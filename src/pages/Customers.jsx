@@ -20,7 +20,7 @@ export default function Customers() {
   };
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto lg:h-screen p-6 lg:p-10">
       <h1 className="font-display text-3xl text-teal-900">Customers</h1>
       <p className="mt-1 text-ink-soft">Everyone who has signed up on the storefront.</p>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, ShieldCheck, Trash2, Power, KeyRound, Mail, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, X, ShieldCheck, Trash2, Power, KeyRound, Mail, CheckCircle2, Loader2, Pencil } from 'lucide-react';
 import { adminsApi, adminAuthApi } from '../lib/api';
 import { useAdminAuth } from '../lib/AdminAuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
@@ -11,6 +11,8 @@ const sections = [
   { id: 'orders', label: 'Orders' },
   { id: 'reports', label: 'Reports' },
   { id: 'users', label: 'Customers' },
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'adminTeam', label: 'AdminTeam' },
 ];
 
 export default function Admins() {
@@ -22,6 +24,9 @@ export default function Admins() {
   const [resetMailSending, setResetMailSending] = useState(false);
   const [resetMailStatus, setResetMailStatus] = useState('');
   const [form, setForm] = useState({ fullName: '', email: '', password: '', permissions: [] });
+  const [editAdmin, setEditAdmin] = useState(false)
+  const [editDetail, setEditDetail] = useState({ fullName: '', email: '', password: '', permissions: [] })
+  const [editId, setEditId]=useState("")
 
   const load = () => {
     setLoading(true);
@@ -52,6 +57,13 @@ export default function Admins() {
     }));
   };
 
+    const editPermission = (id) => {
+    setEditDetail((f) => ({
+      ...f,
+      permissions: f.permissions.includes(id) ? f.permissions.filter((p) => p !== id) : [...f.permissions, id],
+    }));
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     await adminsApi.create(form);
@@ -60,6 +72,13 @@ export default function Admins() {
     load();
   };
 
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    await adminsApi.updateAdmin(editId, editDetail);
+    setEditDetail({ fullName: '', email: '', password: '', permissions: [] });
+    setEditAdmin(false);
+    load();
+  };
   const toggleActive = async (admin) => {
     await adminsApi.update(admin._id, { permissions: admin.permissions, isActive: !admin.isActive });
     load();
@@ -72,7 +91,7 @@ export default function Admins() {
   };
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto lg:h-screen p-6 lg:p-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-teal-900">Admin team</h1>
@@ -114,7 +133,7 @@ export default function Admins() {
                 <KeyRound size={14} /> Change Password
               </button>
 
-              <button
+              {/* <button
                 type="button"
                 onClick={handleSendResetEmail}
                 disabled={resetMailSending}
@@ -122,7 +141,7 @@ export default function Admins() {
               >
                 {resetMailSending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
                 <span>Send Reset Link to Email</span>
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -136,7 +155,7 @@ export default function Admins() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {!loading && admins.map((a) => (
+        {!loading && admins.map((a,i) => (
           <div key={a._id} className="rounded-2xl border border-line bg-paper p-5">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -148,9 +167,21 @@ export default function Admins() {
                   <p className="text-xs text-ink-soft">{a.email}</p>
                 </div>
               </div>
+              <div className='flex items-center justify-around gap-2'> 
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${a.isActive ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-600'}`}>
                 {a.isActive ? 'Active' : 'Disabled'}
               </span>
+        
+                        <span  onClick={() => {
+                          setEditAdmin(true)
+                          setEditDetail(admins[i])
+                          setEditId(a._id)
+                          // console.log("form", admins[i])
+                        }}
+                          className="flex items-center cursor-pointer gap-1.5 rounded-full border border-line px-2.5 py-1  bg-teal-100 text-teal-700 text-[11px] font-medium  "
+                        >
+                          <Pencil size={11} /> Edit
+                        </span> </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {a.permissions.map((p) => (
@@ -194,7 +225,7 @@ export default function Admins() {
                 <h3 className="flex items-center gap-2 font-display text-xl text-teal-900">
                   <ShieldCheck size={20} className="text-gold-600" /> New admin
                 </h3>
-                <button type="button" onClick={() => setModalOpen(false)}><X size={20} className="text-ink-soft" /></button>
+                <button type="button"  onClick={() => setModalOpen(false)}><X size={20} className="text-ink-soft cursor-pointer" /></button>
               </div>
 
               <div className="mt-5 space-y-4">
@@ -230,6 +261,71 @@ export default function Admins() {
 
               <button type="submit" className="mt-6 w-full rounded-full bg-teal-900 py-3 font-semibold text-cream transition hover:bg-teal-700">
                 Create admin
+              </button>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    
+         <AnimatePresence>
+        {editAdmin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+            onClick={() => setEditAdmin(false)}
+          >
+            <motion.form
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              onClick={(e) => e.stopPropagation()}
+              onSubmit={handleEdit}
+              className="w-full max-w-md rounded-2xl bg-paper p-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-display text-xl text-teal-900">
+                  <ShieldCheck size={20} className="text-gold-600" /> Edit admin
+                </h3>
+                <button type="button" onClick={() => setEditAdmin(false)}><X size={20} className="text-ink-soft cursor-pointer" /></button>
+              </div>
+
+              <div className="mt-5 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-ink-soft">Full name</label>
+                  <input required value={editDetail.fullName} onChange={(e) => setEditDetail({ ...editDetail, fullName: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-soft">Email</label>
+                  <input required type="email" value={editDetail.email} onChange={(e) => setEditDetail({ ...editDetail, email: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
+                </div>
+               
+                <div>
+                  <label className="text-sm font-medium text-ink-soft">Temporary password</label>
+                  <input required type="text" value={editDetail.password} onChange={(e) => setEditDetail({ ...editDetail, password: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
+                  <p className="mt-1 text-xs text-ink-soft">Share this with them yourself — it isn't emailed.</p>
+                </div>
+              
+                <div>
+                  <label className="text-sm font-medium text-ink-soft">Access</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {sections.map((s) => (
+                      <button
+                        type="button"
+                        key={s.id}
+                        onClick={() => editPermission(s.id)}
+                        className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${editDetail.permissions.includes(s.id) ? 'border-teal-900 bg-teal-900 text-cream' : 'border-line text-ink-soft'}`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="mt-6 w-full rounded-full bg-teal-900 py-3 font-semibold text-cream transition hover:bg-teal-700">
+                Edit admin
               </button>
             </motion.form>
           </motion.div>

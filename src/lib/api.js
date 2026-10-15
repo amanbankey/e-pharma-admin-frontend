@@ -104,4 +104,5 @@ export const adminsApi = {
   create: (payload) => request('/admin/admins', { method: 'POST', body: JSON.stringify(payload) }),
   update: (id, payload) => request(`/admin/admins/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   remove: (id) => request(`/admin/admins/${id}`, { method: 'DELETE' }),
+  updateAdmin: (id, payload) => request(`/admin/admins/update/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
 };
