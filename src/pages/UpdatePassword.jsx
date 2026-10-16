@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion';
 import { KeyRound, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft, Loader2, ShieldCheck, Leaf } from 'lucide-react';
 import { adminAuthApi } from '../lib/api';
+import { PASSWORD_MIN_LENGTH, getPasswordConditionErrors, isPasswordTooShort } from '../lib/passwordValidation';
 
 export default function UpdatePassword() {
   const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ export default function UpdatePassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,10 +35,17 @@ export default function UpdatePassword() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (isPasswordTooShort(password)) {
+      setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`);
       return;
     }
+
+    const conditionErrors = getPasswordConditionErrors(password);
+    if (conditionErrors.length > 0) {
+      setPasswordErrors(conditionErrors);
+      return;
+    }
+    setPasswordErrors([]);
 
     if (password !== confirmPassword) {
       setError('New password and confirm password do not match.');
@@ -151,9 +160,12 @@ export default function UpdatePassword() {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="At least 6 characters"
+                      placeholder="At least 8 characters"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordErrors([]);
+                      }}
                       className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500 pr-11"
                     />
                     <button
@@ -165,6 +177,13 @@ export default function UpdatePassword() {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {passwordErrors.length > 0 && (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {passwordErrors.map((err) => (
+                        <li key={err} className="text-xs text-red-600">{err}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 {/* Confirm Password */}

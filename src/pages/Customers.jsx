@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ChevronLeft, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react';
+import Loader from '../components/Loader';
 import { usersApi } from '../lib/api';
 
 const ITEMS_PER_PAGE = 10;
@@ -60,7 +61,7 @@ export default function Customers() {
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper">
         {loading ? (
-          <p className="p-6 text-ink-soft">Loading…</p>
+          <Loader />
         ) : (
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>

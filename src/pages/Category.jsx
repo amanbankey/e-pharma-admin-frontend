@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, X, Tag, MoreVertical, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import Loader from '../components/Loader';
 import { categoryApi } from '../lib/api';
 
 const ITEMS_PER_PAGE = 10;
@@ -115,7 +116,7 @@ export default function Category() {
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper">
         {loading ? (
-          <p className="p-6 text-ink-soft">Loading categories…</p>
+          <Loader label="Loading categories…" />
         ) : (
           <table className="w-full text-left text-sm">
             <thead>

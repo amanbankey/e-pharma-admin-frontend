@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Boxes, PackageCheck, PackageMinus, AlertTriangle, PackageX, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import StatCard from '../components/StatCard';
+import Loader from '../components/Loader';
 import { inventoryApi } from '../lib/api';
 
 const filters = [
@@ -81,7 +82,7 @@ export default function Inventory() {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper">
         {loading ? (
-          <p className="p-6 text-ink-soft">Loading…</p>
+          <Loader />
         ) : (
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>

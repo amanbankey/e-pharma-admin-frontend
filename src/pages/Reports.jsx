@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ComposedChart, Bar, Line, Cell, CartesianGrid, ReferenceLine, Legend, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { reportsApi } from '../lib/api';
+import Loader from '../components/Loader';
 
 const periods = [
   { id: 'daily', label: 'Daily' },
@@ -136,7 +137,7 @@ export default function Reports() {
 
         <div className="mt-5 h-80">
           {loading ? (
-            <p className="text-ink-soft">Loading…</p>
+            <Loader />
           ) : !summary ? (
             <p className="text-ink-soft">No sales data for this period yet.</p>
           ) : (

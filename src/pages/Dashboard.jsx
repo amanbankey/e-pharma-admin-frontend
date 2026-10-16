@@ -4,6 +4,7 @@ import { IndianRupee, Users, ShoppingBag, UserCheck } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
+import Loader from '../components/Loader';
 import { dashboardApi, reportsApi } from '../lib/api';
 
 const formatInLakhs = (n) => {
@@ -35,7 +36,7 @@ export default function Dashboard() {
     ? Object.entries(stats.statusBreakdown).map(([name, value]) => ({ name, value }))
     : [];
 
-  if (loading) return <div className="p-8 text-ink-soft">Loading dashboard…</div>;
+  if (loading) return <Loader fullScreen label="Loading dashboard…" />;
   if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, X, FileWarning, Upload, Image as ImageIcon, Loader2, ChevronLeft, ChevronRight, MoreVertical, AlertTriangle } from 'lucide-react';
 import { productsApi, categoryApi } from '../lib/api';
+import Loader from '../components/Loader';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -240,7 +241,7 @@ export default function Products() {
       {/* Products table */}
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper">
         {loading ? (
-          <p className="p-6 text-ink-soft">Loading products…</p>
+          <Loader label="Loading products…" />
         ) : (
           <>
             <table className="w-full min-w-[900px] text-left text-sm">

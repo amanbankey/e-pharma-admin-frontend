@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Lock, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { adminAuthApi } from '../lib/api';
+import { PASSWORD_MIN_LENGTH, getPasswordConditionErrors, isPasswordTooShort } from '../lib/passwordValidation';
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
   const [oldPassword, setOldPassword] = useState('');
@@ -13,6 +14,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState([]);
 
   if (!isOpen) return null;
 
@@ -25,10 +27,17 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters');
+    if (isPasswordTooShort(newPassword)) {
+      setError(`New password must be at least ${PASSWORD_MIN_LENGTH} characters`);
       return;
     }
+
+    const conditionErrors = getPasswordConditionErrors(newPassword);
+    if (conditionErrors.length > 0) {
+      setPasswordErrors(conditionErrors);
+      return;
+    }
+    setPasswordErrors([]);
 
     if (newPassword !== confirmPassword) {
       setError('New password and confirm password do not match');
@@ -64,6 +73,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
   const handleClose = () => {
     setError('');
     setSuccess(false);
+    setPasswordErrors([]);
     onClose();
   };
 
@@ -141,9 +151,12 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 <input
                   type={showNew ? 'text' : 'password'}
                   required
-                  placeholder="Minimum 6 characters"
+                  placeholder="Minimum 8 characters"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setPasswordErrors([]);
+                  }}
                   className="w-full rounded-xl border border-line bg-cream px-3.5 py-2.5 text-sm outline-none transition focus:border-teal-500 pr-10"
                 />
                 <button
@@ -154,6 +167,13 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {passwordErrors.length > 0 && (
+                <ul className="mt-1.5 space-y-0.5">
+                  {passwordErrors.map((err) => (
+                    <li key={err} className="text-xs text-red-600">{err}</li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {/* Confirm New Password */}

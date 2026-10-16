@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, CalendarDays, Pencil, MoreVertical } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
+import Loader from '../components/Loader';
 import { ordersApi } from '../lib/api';
 
 const ITEMS_PER_PAGE = 20;
@@ -102,7 +103,7 @@ export default function Orders() {
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper">
         {loading ? (
-          <p className="p-6 text-ink-soft">Loading orders…</p>
+          <Loader label="Loading orders…" />
         ) : (
           <>
             <table className="w-full min-w-[860px] text-left text-sm">

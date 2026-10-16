@@ -4,6 +4,7 @@ import { Plus, X, ShieldCheck, Trash2, Power, KeyRound, Mail, CheckCircle2, Load
 import { adminsApi, adminAuthApi } from '../lib/api';
 import { useAdminAuth } from '../lib/AdminAuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import { PASSWORD_MIN_LENGTH, getPasswordConditionErrors, isPasswordTooShort } from '../lib/passwordValidation';
 
 const sections = [
   { id: 'products', label: 'Products' },
@@ -30,6 +31,8 @@ export default function Admins() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [createPasswordErrors, setCreatePasswordErrors] = useState([]);
+  const [editPasswordErrors, setEditPasswordErrors] = useState([]);
 
   const load = () => {
     setLoading(true);
@@ -69,6 +72,18 @@ export default function Admins() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+
+    if (isPasswordTooShort(form.password)) {
+      alert(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`);
+      return;
+    }
+    const conditionErrors = getPasswordConditionErrors(form.password);
+    if (conditionErrors.length > 0) {
+      setCreatePasswordErrors(conditionErrors);
+      return;
+    }
+    setCreatePasswordErrors([]);
+
     await adminsApi.create(form);
     setForm({ fullName: '', email: '', password: '', permissions: [] });
     setModalOpen(false);
@@ -77,6 +92,18 @@ export default function Admins() {
 
   const handleEdit = async (e) => {
     e.preventDefault();
+
+    if (isPasswordTooShort(editDetail.password)) {
+      alert(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`);
+      return;
+    }
+    const conditionErrors = getPasswordConditionErrors(editDetail.password);
+    if (conditionErrors.length > 0) {
+      setEditPasswordErrors(conditionErrors);
+      return;
+    }
+    setEditPasswordErrors([]);
+
     await adminsApi.updateAdmin(editId, editDetail);
     setEditDetail({ fullName: '', email: '', password: '', permissions: [] });
     setEditAdmin(false);
@@ -262,8 +289,25 @@ export default function Admins() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-soft">Temporary password</label>
-                  <input required type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
-                  <p className="mt-1 text-xs text-ink-soft">Share this with them yourself — it isn't emailed.</p>
+                  <input
+                    required
+                    type="text"
+                    value={form.password}
+                    onChange={(e) => {
+                      setForm({ ...form, password: e.target.value });
+                      setCreatePasswordErrors([]);
+                    }}
+                    placeholder="At least 8 characters"
+                    className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500"
+                  />
+                  {createPasswordErrors.length > 0 && (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {createPasswordErrors.map((err) => (
+                        <li key={err} className="text-xs text-red-600">{err}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-xs text-ink-soft">Must have a letter, a number and a special character. Share this with them yourself — it isn't emailed.</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-soft">Access</label>
@@ -326,8 +370,25 @@ export default function Admins() {
                
                 <div>
                   <label className="text-sm font-medium text-ink-soft">Temporary password</label>
-                  <input required type="text" value={editDetail.password} onChange={(e) => setEditDetail({ ...editDetail, password: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500" />
-                  <p className="mt-1 text-xs text-ink-soft">Share this with them yourself — it isn't emailed.</p>
+                  <input
+                    required
+                    type="text"
+                    value={editDetail.password}
+                    onChange={(e) => {
+                      setEditDetail({ ...editDetail, password: e.target.value });
+                      setEditPasswordErrors([]);
+                    }}
+                    placeholder="At least 8 characters"
+                    className="mt-1.5 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-teal-500"
+                  />
+                  {editPasswordErrors.length > 0 && (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {editPasswordErrors.map((err) => (
+                        <li key={err} className="text-xs text-red-600">{err}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-xs text-ink-soft">Must have a letter, a number and a special character. Share this with them yourself — it isn't emailed.</p>
                 </div>
               
                 <div>
